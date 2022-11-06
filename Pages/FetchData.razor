@@ -1,0 +1,69 @@
+﻿@page "/fetchdata"
+@using MudBlazorUI.Data
+@inject DailyChoreService ChoreService
+@inject IDialogService DialogService
+
+<PageTitle>Weekly Chores</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Weekly Chores</MudText>
+<MudText Class="mb-8">These are the chores you should complete this week.</MudText>
+@if (chores == null)
+{
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+}
+else
+{
+    <MudTable Items="chores" Hover="true" SortLabel="Sort By" Elevation="0">
+        <HeaderContent>
+            <MudTh><MudIcon Icon="@Icons.Material.Filled.Person" Title="Favorite" />Child Name</MudTh>
+            <MudTh>Responsibility</MudTh>
+            <MudTh>Details</MudTh>
+            <MudTh>Completed?</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Person</MudTd>
+            <MudTd>@context.ChoreName</MudTd>
+            <MudTd>@context.ChoreDescription</MudTd>
+            @if(context.ChoreCompleted)
+            {
+                <MudTd><MudAvatar Color="Color.Success">Y</MudAvatar></MudTd>
+
+            }
+            else
+            {
+                <MudButton OnClick="@(() => SaveChore(context.ChoreName))" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" Color="Color.Info" Size="Size.Small">Save</MudButton>
+            }
+
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[]{50, 100}" />
+        </PagerContent>
+    </MudTable>
+}
+
+
+@code {
+    private DailyChoreItem[]? chores;
+
+    protected override async Task OnInitializedAsync()
+    {
+        chores = await ChoreService.GetDailyChoresAsync();
+    }
+
+    private async void SaveChore(string choreName)
+    {
+        Console.WriteLine(choreName);
+
+
+        var answer =  await DialogService.ShowMessageBox("Are you sure?", "Are you sure you completed your chores?", "Yes", "No");
+        
+        if (answer == false)
+        {
+            await DialogService.ShowMessageBox("Uh oh.", "You are grounded");
+        }
+        else if (answer == true)
+        {
+            await Task.Run(() =>  chores!.First(c => c.ChoreName == choreName).ChoreCompleted = true);
+        }
+    }
+}
